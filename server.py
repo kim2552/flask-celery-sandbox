@@ -58,14 +58,7 @@ def submit_job():
 
     jobs = data_obj['jobs']
     for job in jobs:
-        text = job['text']
-        coords = job['coords']
-        position = job['position']
-        color = job['color']
-        text_size = job['text_size']
-        font = job['font']
-
-        result = process_image_text.delay(image_string,text,coords,position,color,text_size,font)
+        result = process_image_text.delay(image_string,job)
         print("result-id:",result)
 
     #Encode response using jsonpickle

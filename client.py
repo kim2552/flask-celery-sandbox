@@ -2,6 +2,7 @@ import base64
 import requests
 import json
 import pandas as pd
+from operator import itemgetter
 
 # URL for flask app
 addr = 'http://127.0.0.1:5000'
@@ -11,53 +12,57 @@ submit_url = addr + '/submit'
 content_type = 'image/jpg'
 headers = {'content-type': content_type}
 
-coords = [50,50,500,500]
-position = "top-center"
-color = (0,0,0)
-text_size = 20
-font="arial.ttf"
-
-with open("image.jpg", "rb") as image2string:
-    image_string = base64.b64encode(image2string.read()).decode('utf-8')
-
+###### INPUTS FROM THE FRONT-END #########
+image_name = "image.jpg"
 entries = [
 {
     "column": "Name",
-    "coords": coords,
-    "position": position,
-    "color": color,
-    "text_size": text_size,
-    "font": font
+    "coords": [50,50,500,500],
+    "position": "top-center",
+    "color": (0,0,0),
+    "text_size": 20,
+    "font": "arial.ttf"
 },
 {
     "column": "Date",
-    "coords": coords,
-    "position": position,
-    "color": color,
-    "text_size": text_size,
-    "font": font
+    "coords": [300,50,800,400],
+    "position": "center",
+    "color": (75,200,50),
+    "text_size": 40,
+    "font": "arial.ttf"
 }]
+##########################################
 
-def format_entries(column, entry):
+def format_entries(df, all_columns, entries):
     new_jobs = []
-    for text in column:
-        new_job = {
-            "text": str(text),
-            "coords": entry['coords'],
-            "position": entry['position'],
-            "color": entry['color'],
-            "text_size": entry['text_size'],
-            "font": entry['font']
-        }
-        new_jobs.append(new_job)
+    last_row = df.count().max()
+    for row in range(0,last_row):
+        text_and_rects = []
+        for col in all_columns:
+            i = next((index for (index, d) in enumerate(entries) if d["column"] == col), None)
+            new_text_and_rect = {
+                "text": str(df[col][row]),
+                "coords": entries[i]['coords'],
+                "position": entries[i]['position'],
+                "color": entries[i]['color'],
+                "text_size": entries[i]['text_size'],
+                "font": entries[i]['font']
+            }
+            text_and_rects.append(new_text_and_rect)
+        new_jobs.append(text_and_rects)
     return new_jobs
+
+with open(image_name, "rb") as image2string:
+    image_string = base64.b64encode(image2string.read()).decode('utf-8')
 
 df = pd.read_excel('excel_file.xlsx')
 
 jobs = []
+all_columns = []
 for entry in entries:
-    new_jobs = format_entries(df[entry["column"]],entry)
-    jobs = jobs + new_jobs
+    all_columns.append(entry["column"])
+
+jobs = format_entries(df,all_columns,entries)
 
 data = {
     "image_string": image_string,

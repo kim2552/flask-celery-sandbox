@@ -111,13 +111,20 @@ def image_rectangle_text(img, text, coords, position, text_color, text_size, fon
     return img
 
 @app.task
-def process_image_text(image_string, text, coords, position, color, text_size, font):
+def process_image_text(image_string, text_and_boxes):
     processed_image_str = ""
     try:
         image = io.BytesIO(base64.b64decode(image_string.encode('utf-8')))
         img = Image.open(image)
 
-        img = image_rectangle_text(img, text, coords, position, tuple(color), text_size, font)
+        for textbox in text_and_boxes:
+            text = textbox['text']
+            coords = textbox['coords']
+            position = textbox['position']
+            color = tuple(textbox['color'])
+            text_size = textbox['text_size']
+            font = textbox['font']
+            img = image_rectangle_text(img, text, coords, position, tuple(color), text_size, font)
 
         byte_io = io.BytesIO()
         img.save(byte_io,'PNG')
